@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打点记录（含图片上传）</title>
+    <title>打点记录</title>
     <style>
         * {
             margin: 0;
@@ -211,7 +211,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>打点记录26.7.27</h1>
+    <h1>打点 记录</h1>
     <div class="stat-wrap">
         <div>
             <div class="stat-num" id="finishCount">0</div>
@@ -269,7 +269,7 @@
             {name:"3-4",times:1},
             {name:"3-3",times:1},
             {name:"3楼电梯",times:1},
-            {name:"对面",times:1},
+            {name:"3-2",times:1},
             {name:"2-2",times:1},
             {name:"3福",times:1},
             {name:"2-3",times:1},
@@ -298,7 +298,7 @@
             {name:"全聚德电梯",times:1},
             {name:"沿江168-7",times:1},
             {name:"优衣库",times:1},
-            {name:"1-10",times:1}
+            {name:"沿江1-10",times:1}
         ];
 
         const totalCheckSum = rawList.reduce((sum, item) => sum + item.times, 0);
@@ -406,7 +406,7 @@
             imageArea.innerHTML = '';
 
             if (currentIdx >= taskList.length) {
-                posNameInput.value = "全部点位检查完毕";
+                posNameInput.value = "已结束";
                 posNameInput.disabled = true;
                 saveNameBtn.disabled = true;
                 timesTextEl.textContent = "";
