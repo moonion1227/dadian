@@ -102,8 +102,6 @@
             line-height: 1.6;
             margin-bottom: 12px;
         }
-
-        /* ===== 修改部分 ===== */
         .image-area {
             display: flex;
             flex-direction: column;
@@ -114,7 +112,7 @@
             padding-top: 12px;
         }
         .image-area img {
-            max-height: 250px;      /* 图片变大 */
+            max-height: 250px;
             max-width: 100%;
             border-radius: 8px;
             border: 1px solid #e5e7eb;
@@ -129,13 +127,13 @@
             align-items: center;
         }
         .image-btn {
-            padding: 4px 16px;      /* 按钮改小 */
+            padding: 4px 16px;
             border-radius: 6px;
             border: none;
             background: #e5e7eb;
             color: #1f2937;
             cursor: pointer;
-            font-size: 12px;        /* 字体改小 */
+            font-size: 12px;
             transition: 0.2s;
             min-width: 80px;
             line-height: 1.8;
@@ -162,22 +160,58 @@
             color: #9ca3af;
             font-size: 14px;
         }
-        /* ===== 修改结束 ===== */
-
+        .nav-box {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+        .nav-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            background: #e5e7eb;
+            color: #1f2937;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: #d1d5db;
+        }
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .nav-btn.primary {
+            background: #2563eb;
+            color: #fff;
+        }
+        .nav-btn.primary:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
         .btn-box {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-row {
             display: flex;
             gap: 14px;
         }
-        button {
+        .btn-row button {
             flex: 1;
-            padding: 16px;
+            padding: 12px 10px;
             border-radius: 12px;
             border: none;
-            font-size: 17px;
+            font-size: 15px;
             cursor: pointer;
             transition: 0.2s;
+            min-width: 0;
         }
         #confirmBtn {
+            flex: 2;
             background-color: #2563eb;
             color: #fff;
         }
@@ -194,6 +228,28 @@
             color: #888;
             cursor: not-allowed;
         }
+        #clearImagesBtn {
+            background-color: #f97316;
+            color: #fff;
+        }
+        #clearImagesBtn:hover:not(:disabled) {
+            background-color: #ea580c;
+        }
+        #resetNamesBtn {
+            background-color: #8b5cf6;
+            color: #fff;
+        }
+        #resetNamesBtn:hover:not(:disabled) {
+            background-color: #7c3aed;
+        }
+        .btn-row:last-child button {
+            font-size: 13px;
+            padding: 8px 10px;
+        }
+        .btn-row button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .toast {
             position: fixed;
             left: 50%;
@@ -207,11 +263,90 @@
             z-index: 9999;
             display: none;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80%;
+            border-radius: 18px;
+            padding: 24px 20px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-close {
+            position: sticky;
+            top: 0;
+            float: right;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 8px;
+        }
+        .grid-item {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(200,200,200,0.2);
+            border: 2px solid #d1d5db;
+            color: #6b7280;
+            transition: 0.15s;
+        }
+        .grid-item.done {
+            background: #1f2937;
+            color: #ffffff;
+            border-color: #1f2937;
+        }
+        .grid-item.current {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 2px #f59e0b;
+        }
+        .grid-item:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>打点 记录</h1>
+    <h1>打点记录</h1>
     <div class="stat-wrap">
         <div>
             <div class="stat-num" id="finishCount">0</div>
@@ -230,139 +365,172 @@
             <button class="edit-btn" id="saveNameBtn">保存</button>
         </div>
         <div class="check-times" id="timesText"></div>
-
-        <!-- 图片上传和预览区域 -->
-        <div class="image-area" id="imageArea">
-            <!-- 动态渲染 -->
+        <div class="image-area" id="imageArea"></div>
+        <div class="nav-box">
+            <button class="nav-btn" id="prevBtn">◀ 上一个</button>
+            <button class="nav-btn primary" id="overviewBtn2">📋 总览</button>
+            <button class="nav-btn" id="nextBtn">下一个 ▶</button>
         </div>
     </div>
 
     <div class="btn-box">
-        <button id="confirmBtn">本次确认检查</button>
-        <button id="resetBtn">重置全部进度</button>
+        <div class="btn-row">
+            <button id="confirmBtn">✅ 确认检查</button>
+            <button id="resetBtn">🔄 重置进度</button>
+        </div>
+        <div class="btn-row">
+            <button id="clearImagesBtn">🗑️ 删除图片</button>
+            <button id="resetNamesBtn">📝 恢复默认名</button>
+        </div>
     </div>
 </div>
-<div class="toast" id="toast">点位已打</div>
+<div class="toast" id="toast">操作完成</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+        <button class="modal-close" id="modalCloseBtn">✕</button>
+        <div class="modal-title">所有点位</div>
+        <div id="gridContainer" class="grid-container"></div>
+    </div>
+</div>
 
 <script>
     (function() {
-        // ---------- 原始点位数据 ----------
-        const rawList = [
-            {name:"4楼 26.9.1",times:1},
-            {name:"1-16",times:2},
-            {name:"1-15",times:1},
-            {name:"1-12",times:1},
-            {name:"2号门",times:3},
-            {name:"喵喵理发消防栓",times:1},
-            {name:"3-12",times:1},
-            {name:"3-13",times:1},
-            {name:"3-14",times:1},
-            {name:"3-10",times:1},
-            {name:"3-9",times:1},
-            {name:"万达影城",times:1},
-            {name:"3-8",times:1},
-            {name:"3-2厕所",times:1},
-            {name:"3-7内",times:1},
-            {name:"舞萌dx",times:1},
-            {name:"3-6",times:1},
-            {name:"3-5内",times:1},
-            {name:"3-4",times:1},
-            {name:"3-3",times:1},
-            {name:"3楼电梯",times:1},
-            {name:"3-2",times:1},
-            {name:"2-2",times:1},
-            {name:"3福",times:1},
-            {name:"2-3",times:1},
-            {name:"2-4",times:1},
-            {name:"2-1厕所",times:3},
-            {name:"2-6",times:1},
-            {name:"2-7",times:2},
-            {name:"2-8",times:1},
-            {name:"2-9",times:1},
-            {name:"2-10",times:1},
-            {name:"2-3厕所",times:1},
-            {name:"3号货梯间",times:1},
-            {name:"1-10",times:1},
-            {name:"1-9",times:1},
-            {name:"1-8",times:1},
-            {name:"1-7",times:1},
-            {name:"1-6",times:1},
-            {name:"1-4",times:1},
-            {name:"1-3",times:1},
-            {name:"麦当劳甜品站",times:1},
-            {name:"1-2",times:2},
-            {name:"1-1",times:1},
-            {name:"1号门",times:1},
-            {name:"3号门",times:1},
-            {name:"kkv",times:1},
-            {name:"全聚德电梯",times:1},
-            {name:"沿江168-7",times:1},
-            {name:"优衣库",times:1},
-            {name:"沿江1-10",times:1}
+        const sourceList = [
+            {name:"4楼 26.9.1", times:1},
+            {name:"1-16", times:2},
+            {name:"1-15", times:1},
+            {name:"1-12", times:1},
+            {name:"2号门", times:3},
+            {name:"喵喵理发消防栓", times:1},
+            {name:"3-12", times:1},
+            {name:"3-13", times:1},
+            {name:"3-14", times:1},
+            {name:"3-10", times:1},
+            {name:"3-9", times:1},
+            {name:"万达影城", times:1},
+            {name:"3-8", times:1},
+            {name:"3-2厕所", times:1},
+            {name:"3-7内", times:1},
+            {name:"舞萌dx", times:1},
+            {name:"3-6", times:1},
+            {name:"3-5内", times:1},
+            {name:"3-4", times:1},
+            {name:"3-3", times:1},
+            {name:"3楼电梯", times:1},
+            {name:"3-2", times:1},
+            {name:"2-2", times:1},
+            {name:"3福", times:1},
+            {name:"2-3", times:1},
+            {name:"2-4", times:1},
+            {name:"2-1厕所", times:3},
+            {name:"2-6", times:1},
+            {name:"2-7", times:2},
+            {name:"2-8", times:1},
+            {name:"2-9", times:1},
+            {name:"2-10", times:1},
+            {name:"2-3厕所", times:1},
+            {name:"3号货梯间", times:1},
+            {name:"1-10", times:1},
+            {name:"1-9", times:1},
+            {name:"1-8", times:1},
+            {name:"1-7", times:1},
+            {name:"1-6", times:1},
+            {name:"1-4", times:1},
+            {name:"1-3", times:1},
+            {name:"麦当劳甜品站", times:1},
+            {name:"1-2", times:2},
+            {name:"1-1", times:1},
+            {name:"1号门", times:1},
+            {name:"3号门", times:1},
+            {name:"kkv", times:1},
+            {name:"全聚德电梯", times:1},
+            {name:"沿江168-7", times:1},
+            {name:"优衣库", times:1},
+            {name:"沿江1-10", times:1}
         ];
 
-        const totalCheckSum = rawList.reduce((sum, item) => sum + item.times, 0);
+        function expandList(list) {
+            let result = [];
+            list.forEach(item => {
+                for (let i = 0; i < item.times; i++) {
+                    result.push({
+                        name: item.name,
+                        times: 1,
+                        checked: 0
+                    });
+                }
+            });
+            return result;
+        }
+
+        let defaultNames = [];
+
+        const totalCheckSum = (() => {
+            const expanded = expandList(sourceList);
+            return expanded.reduce((s, i) => s + i.times, 0);
+        })();
+
         const STORAGE_KEY = "fire_check_v7_data";
         const DB_NAME = "PointImageDB";
         const STORE_NAME = "images";
 
-        // ---------- IndexedDB 图片操作 ----------
         function openDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-                request.onupgradeneeded = function(e) {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
                         db.createObjectStore(STORE_NAME, { keyPath: "idx" });
                     }
                 };
-                request.onsuccess = function(e) {
-                    resolve(e.target.result);
-                };
-                request.onerror = function(e) {
-                    reject(e.target.error);
-                };
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = e => reject(e.target.error);
             });
         }
-
         async function saveImage(idx, dataUrl) {
             const db = await openDB();
-            return new Promise((resolve, reject) => {
+            return new Promise((res, rej) => {
                 const tx = db.transaction(STORE_NAME, "readwrite");
                 const store = tx.objectStore(STORE_NAME);
-                const req = store.put({ idx: idx, data: dataUrl });
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
+                const req = store.put({ idx, data: dataUrl });
+                req.onsuccess = () => res();
+                req.onerror = () => rej(req.error);
             });
         }
-
         async function getImage(idx) {
             const db = await openDB();
-            return new Promise((resolve, reject) => {
+            return new Promise((res, rej) => {
                 const tx = db.transaction(STORE_NAME, "readonly");
                 const store = tx.objectStore(STORE_NAME);
                 const req = store.get(idx);
-                req.onsuccess = () => resolve(req.result ? req.result.data : null);
-                req.onerror = () => reject(req.error);
+                req.onsuccess = () => res(req.result ? req.result.data : null);
+                req.onerror = () => rej(req.error);
             });
         }
-
         async function deleteImage(idx) {
             const db = await openDB();
-            return new Promise((resolve, reject) => {
+            return new Promise((res, rej) => {
                 const tx = db.transaction(STORE_NAME, "readwrite");
                 const store = tx.objectStore(STORE_NAME);
                 const req = store.delete(idx);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
+                req.onsuccess = () => res();
+                req.onerror = () => rej(req.error);
+            });
+        }
+        async function clearAllImages() {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(STORE_NAME, "readwrite");
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.clear();
+                req.onsuccess = () => res();
+                req.onerror = () => rej(req.error);
             });
         }
 
-        // ---------- 应用状态 ----------
-        let taskList = JSON.parse(JSON.stringify(rawList));
+        let taskList = [];
         let currentIdx = 0;
-        let currentConfirm = 0;
-        let finishTotal = 0;
         let isLocked = false;
 
         const finishCountEl = document.getElementById("finishCount");
@@ -372,61 +540,88 @@
         const timesTextEl = document.getElementById("timesText");
         const confirmBtn = document.getElementById("confirmBtn");
         const resetBtn = document.getElementById("resetBtn");
+        const clearImagesBtn = document.getElementById("clearImagesBtn");
+        const resetNamesBtn = document.getElementById("resetNamesBtn");
         const toast = document.getElementById("toast");
         const imageArea = document.getElementById("imageArea");
-
+        const prevBtn = document.getElementById("prevBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const overviewBtn2 = document.getElementById("overviewBtn2");
+        const modalOverlay = document.getElementById("modalOverlay");
+        const modalCloseBtn = document.getElementById("modalCloseBtn");
+        const gridContainer = document.getElementById("gridContainer");
         let fileInput = null;
-
-        function init() {
-            const cache = localStorage.getItem(STORAGE_KEY);
-            if (cache) {
-                const data = JSON.parse(cache);
-                currentIdx = data.curIdx ?? 0;
-                currentConfirm = data.curConfirm ?? 0;
-                finishTotal = data.finishTotal ?? 0;
-                if (data.modifiedList) taskList = data.modifiedList;
-            }
-            if (currentIdx >= taskList.length) currentIdx = taskList.length;
-            render();
-        }
 
         function saveLocal() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 curIdx: currentIdx,
-                curConfirm: currentConfirm,
-                finishTotal: finishTotal,
                 modifiedList: taskList
             }));
         }
 
+        function calcFinishTotal() {
+            return taskList.reduce((s, i) => s + i.checked, 0);
+        }
+
+        function findNextUnfinished(startIdx) {
+            for (let i = startIdx; i < taskList.length; i++) {
+                if (taskList[i].checked < taskList[i].times) return i;
+            }
+            return -1;
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.display = "block";
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 1500);
+        }
+
         async function render() {
             totalCheckNumEl.textContent = totalCheckSum;
-            finishCountEl.textContent = finishTotal;
-
+            finishCountEl.textContent = calcFinishTotal();
             imageArea.innerHTML = '';
 
-            if (currentIdx >= taskList.length) {
-                posNameInput.value = "已结束";
+            const total = taskList.length;
+            const doneCount = taskList.filter(i => i.checked >= i.times).length;
+            if (doneCount === total) {
+                posNameInput.value = "🎉 全部完成！";
                 posNameInput.disabled = true;
                 saveNameBtn.disabled = true;
                 timesTextEl.textContent = "";
                 confirmBtn.disabled = true;
                 resetBtn.disabled = isLocked;
-                imageArea.innerHTML = `<span class="empty-tip">已完成所有点位</span>`;
+                clearImagesBtn.disabled = isLocked;
+                resetNamesBtn.disabled = isLocked;
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                imageArea.innerHTML = `<span class="empty-tip">恭喜你完成所有点位！</span>`;
+                overviewBtn2.textContent = `📋 总览 (${total}/${total})`;
                 return;
+            }
+
+            if (currentIdx < 0 || currentIdx >= taskList.length) {
+                currentIdx = 0;
+                saveLocal();
             }
 
             const item = taskList[currentIdx];
             posNameInput.disabled = false;
             saveNameBtn.disabled = false;
             posNameInput.value = item.name;
-            timesTextEl.innerHTML = `该点位需检查：${item.times} 次｜已确认：${currentConfirm}/${item.times}`;
-            confirmBtn.disabled = isLocked;
+            const checkedNow = item.checked;
+            timesTextEl.innerHTML = `该点位需检查：${item.times} 次｜已确认：${checkedNow}/${item.times}`;
+            confirmBtn.disabled = isLocked || (checkedNow >= item.times);
             resetBtn.disabled = isLocked;
+            clearImagesBtn.disabled = isLocked;
+            resetNamesBtn.disabled = isLocked;
+
+            prevBtn.disabled = (currentIdx === 0);
+            nextBtn.disabled = (currentIdx === taskList.length - 1);
 
             try {
                 const imageData = await getImage(currentIdx);
-                // 图片
                 if (imageData) {
                     const img = document.createElement('img');
                     img.src = imageData;
@@ -439,11 +634,9 @@
                     imageArea.appendChild(tip);
                 }
 
-                // 按钮容器（垂直排列）
                 const btnGroup = document.createElement('div');
                 btnGroup.className = 'btn-group';
 
-                // 上传按钮
                 const uploadBtn = document.createElement('button');
                 uploadBtn.className = 'image-btn upload';
                 uploadBtn.textContent = '📤 上传图片';
@@ -473,7 +666,6 @@
                 });
                 btnGroup.appendChild(uploadBtn);
 
-                // 删除按钮（仅当有图片时显示）
                 if (imageData) {
                     const delBtn = document.createElement('button');
                     delBtn.className = 'image-btn delete';
@@ -487,27 +679,52 @@
                     });
                     btnGroup.appendChild(delBtn);
                 }
-
                 imageArea.appendChild(btnGroup);
-
             } catch (e) {
                 console.error('图片加载失败', e);
                 imageArea.innerHTML = `<span class="empty-tip">图片加载失败</span>`;
             }
+
+            overviewBtn2.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
         }
 
         function showToastAndLock() {
             isLocked = true;
-            toast.style.display = "block";
             render();
             setTimeout(() => {
                 isLocked = false;
-                toast.style.display = "none";
                 render();
             }, 1500);
         }
 
-        // ---------- 事件绑定 ----------
+        function renderModal() {
+            gridContainer.innerHTML = '';
+            const total = taskList.length;
+            for (let i = 0; i < total; i++) {
+                const div = document.createElement('div');
+                div.className = 'grid-item';
+                div.textContent = i + 1;
+                const item = taskList[i];
+                if (item.checked >= item.times) div.classList.add('done');
+                if (i === currentIdx) div.classList.add('current');
+                div.addEventListener('click', function() {
+                    currentIdx = i;
+                    saveLocal();
+                    render();
+                    closeModal();
+                });
+                gridContainer.appendChild(div);
+            }
+        }
+
+        function openModal() {
+            renderModal();
+            modalOverlay.classList.add('active');
+        }
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+        }
+
         saveNameBtn.addEventListener("click", () => {
             const newName = posNameInput.value.trim();
             if (!newName) return;
@@ -522,29 +739,126 @@
             if (isLocked) return;
             if (currentIdx >= taskList.length) return;
             const item = taskList[currentIdx];
-            currentConfirm++;
-            finishTotal++;
-
-            if (currentConfirm >= item.times) {
-                currentIdx++;
-                currentConfirm = 0;
+            if (item.checked < item.times) {
+                item.checked++;
+                saveLocal();
+                if (item.checked >= item.times) {
+                    const next = findNextUnfinished(currentIdx + 1);
+                    if (next !== -1) {
+                        currentIdx = next;
+                        saveLocal();
+                    }
+                }
+                render();
+                showToastAndLock();
+                showToast('✅ 已确认检查');
             }
-            saveLocal();
-            render();
-            showToastAndLock();
         });
 
         resetBtn.addEventListener("click", () => {
             if (isLocked) return;
-            if (!confirm('确定重置全部进度吗？')) return;
+            if (!confirm('确定重置全部进度吗？（不会删除图片和名字）')) return;
+            taskList.forEach(i => i.checked = 0);
             currentIdx = 0;
-            currentConfirm = 0;
-            finishTotal = 0;
             saveLocal();
             render();
+            showToast('🔄 进度已重置');
         });
 
-        init();
+        clearImagesBtn.addEventListener("click", async () => {
+            if (isLocked) return;
+            if (!confirm('确定要删除所有点位的图片吗？此操作不可撤销！')) return;
+            try {
+                await clearAllImages();
+                render();
+                showToast('🗑️ 所有图片已删除');
+            } catch (e) {
+                console.error('删除图片失败', e);
+                showToast('❌ 删除图片失败，请重试');
+            }
+        });
+
+        resetNamesBtn.addEventListener("click", () => {
+            if (isLocked) return;
+            if (!confirm('确定恢复所有点位名称为默认名称吗？（不会影响检查进度）')) return;
+            for (let i = 0; i < taskList.length; i++) {
+                taskList[i].name = defaultNames[i] || taskList[i].name;
+            }
+            saveLocal();
+            render();
+            showToast('📝 已恢复默认名称');
+        });
+
+        prevBtn.addEventListener("click", () => {
+            if (currentIdx > 0) {
+                currentIdx--;
+                saveLocal();
+                render();
+            }
+        });
+
+        nextBtn.addEventListener("click", () => {
+            if (currentIdx < taskList.length - 1) {
+                currentIdx++;
+                saveLocal();
+                render();
+            }
+        });
+
+        overviewBtn2.addEventListener("click", openModal);
+        modalCloseBtn.addEventListener("click", closeModal);
+        modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
+        document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+        function init() {
+            const expanded = expandList(sourceList);
+            taskList = JSON.parse(JSON.stringify(expanded));
+            defaultNames = taskList.map(item => item.name);
+
+            const cache = localStorage.getItem(STORAGE_KEY);
+            if (cache) {
+                try {
+                    const data = JSON.parse(cache);
+                    currentIdx = data.curIdx ?? 0;
+                    if (data.modifiedList && Array.isArray(data.modifiedList)) {
+                        const oldList = data.modifiedList;
+                        const newList = [];
+                        for (let i = 0; i < taskList.length; i++) {
+                            if (i < oldList.length) {
+                                newList.push({
+                                    name: oldList[i].name || taskList[i].name,
+                                    times: taskList[i].times,
+                                    checked: typeof oldList[i].checked === 'number' ? oldList[i].checked : 0
+                                });
+                            } else {
+                                newList.push({ ...taskList[i] });
+                            }
+                        }
+                        taskList = newList;
+                        saveLocal();
+                    }
+                } catch (e) {
+                    console.warn('缓存解析失败，使用默认列表', e);
+                }
+            }
+            if (currentIdx < 0 || currentIdx >= taskList.length) {
+                currentIdx = 0;
+            }
+            if (currentIdx < taskList.length && taskList[currentIdx].checked >= taskList[currentIdx].times) {
+                const next = findNextUnfinished(currentIdx + 1);
+                if (next !== -1) {
+                    currentIdx = next;
+                    saveLocal();
+                }
+            }
+            render();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     })();
 </script>
 </body>
