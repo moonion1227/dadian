@@ -121,21 +121,21 @@
         }
         .btn-group {
             display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 100%;
-            align-items: center;
+            flex-direction: row;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .image-btn {
-            padding: 4px 16px;
+            padding: 6px 16px;
             border-radius: 6px;
             border: none;
             background: #e5e7eb;
             color: #1f2937;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             transition: 0.2s;
-            min-width: 80px;
+            min-width: 70px;
             line-height: 1.8;
         }
         .image-btn.upload {
@@ -151,6 +151,13 @@
         }
         .image-btn.delete:hover {
             background: #dc2626;
+        }
+        .image-btn.overview {
+            background: #6b7280;
+            color: #fff;
+        }
+        .image-btn.overview:hover {
+            background: #4b5563;
         }
         .image-btn:disabled {
             opacity: 0.5;
@@ -183,13 +190,6 @@
             opacity: 0.4;
             cursor: not-allowed;
         }
-        .nav-btn.primary {
-            background: #2563eb;
-            color: #fff;
-        }
-        .nav-btn.primary:hover:not(:disabled) {
-            background: #1d4ed8;
-        }
         .btn-box {
             margin-top: 12px;
             display: flex;
@@ -211,7 +211,7 @@
             min-width: 0;
         }
         #confirmBtn {
-            flex: 2;
+            flex: 2.6;
             background-color: #2563eb;
             color: #fff;
         }
@@ -368,7 +368,6 @@
         <div class="image-area" id="imageArea"></div>
         <div class="nav-box">
             <button class="nav-btn" id="prevBtn">◀ 上一个</button>
-            <button class="nav-btn primary" id="overviewBtn2">📋 总览</button>
             <button class="nav-btn" id="nextBtn">下一个 ▶</button>
         </div>
     </div>
@@ -397,7 +396,7 @@
 <script>
     (function() {
         const sourceList = [
-            {name:"4楼 26.9.1", times:1},
+            {name:"4楼 26.9.2", times:1},
             {name:"1-16", times:2},
             {name:"1-15", times:1},
             {name:"1-12", times:1},
@@ -415,19 +414,19 @@
             {name:"舞萌dx", times:1},
             {name:"3-6", times:1},
             {name:"3-5内", times:1},
-            {name:"3-4", times:1},
-            {name:"3-3", times:1},
+            {name:"3-4内", times:1},
+            {name:"3-3内", times:1},
             {name:"3楼电梯", times:1},
             {name:"3-2", times:1},
             {name:"2-2", times:1},
             {name:"3福", times:1},
-            {name:"2-3", times:1},
+            {name:"2-3内", times:1},
             {name:"2-4", times:1},
             {name:"2-1厕所", times:3},
             {name:"2-6", times:1},
             {name:"2-7", times:2},
             {name:"2-8", times:1},
-            {name:"2-9", times:1},
+            {name:"2-9内", times:1},
             {name:"2-10", times:1},
             {name:"2-3厕所", times:1},
             {name:"3号货梯间", times:1},
@@ -546,7 +545,6 @@
         const imageArea = document.getElementById("imageArea");
         const prevBtn = document.getElementById("prevBtn");
         const nextBtn = document.getElementById("nextBtn");
-        const overviewBtn2 = document.getElementById("overviewBtn2");
         const modalOverlay = document.getElementById("modalOverlay");
         const modalCloseBtn = document.getElementById("modalCloseBtn");
         const gridContainer = document.getElementById("gridContainer");
@@ -597,7 +595,6 @@
                 prevBtn.disabled = true;
                 nextBtn.disabled = true;
                 imageArea.innerHTML = `<span class="empty-tip">恭喜你完成所有点位！</span>`;
-                overviewBtn2.textContent = `📋 总览 (${total}/${total})`;
                 return;
             }
 
@@ -666,10 +663,19 @@
                 });
                 btnGroup.appendChild(uploadBtn);
 
+                const overviewBtn = document.createElement('button');
+                overviewBtn.className = 'image-btn overview';
+                overviewBtn.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
+                overviewBtn.disabled = isLocked;
+                overviewBtn.addEventListener('click', function() {
+                    openModal();
+                });
+                btnGroup.appendChild(overviewBtn);
+
                 if (imageData) {
                     const delBtn = document.createElement('button');
                     delBtn.className = 'image-btn delete';
-                    delBtn.textContent = '🗑️ 删除图片';
+                    delBtn.textContent = '🗑️ 删除';
                     delBtn.disabled = isLocked;
                     delBtn.addEventListener('click', async function() {
                         if (isLocked) return;
@@ -679,13 +685,12 @@
                     });
                     btnGroup.appendChild(delBtn);
                 }
+
                 imageArea.appendChild(btnGroup);
             } catch (e) {
                 console.error('图片加载失败', e);
                 imageArea.innerHTML = `<span class="empty-tip">图片加载失败</span>`;
             }
-
-            overviewBtn2.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
         }
 
         function showToastAndLock() {
@@ -805,15 +810,30 @@
             }
         });
 
-        overviewBtn2.addEventListener("click", openModal);
         modalCloseBtn.addEventListener("click", closeModal);
         modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
         document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
+        function addNumbersToDuplicates(list) {
+            const nameCount = {};
+            list.forEach(item => {
+                const name = item.name;
+                nameCount[name] = (nameCount[name] || 0) + 1;
+            });
+            const nameIdx = {};
+            list.forEach(item => {
+                const name = item.name;
+                if (nameCount[name] > 1) {
+                    const idx = (nameIdx[name] || 0) + 1;
+                    nameIdx[name] = idx;
+                    item.name = name + " (" + idx + ")";
+                }
+            });
+        }
+
         function init() {
             const expanded = expandList(sourceList);
             taskList = JSON.parse(JSON.stringify(expanded));
-            defaultNames = taskList.map(item => item.name);
 
             const cache = localStorage.getItem(STORAGE_KEY);
             if (cache) {
@@ -841,6 +861,10 @@
                     console.warn('缓存解析失败，使用默认列表', e);
                 }
             }
+
+            addNumbersToDuplicates(taskList);
+            defaultNames = taskList.map(item => item.name);
+
             if (currentIdx < 0 || currentIdx >= taskList.length) {
                 currentIdx = 0;
             }
