@@ -23,12 +23,6 @@
             padding: 24px 20px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.07);
         }
-        h1 {
-            text-align: center;
-            color: #1f2937;
-            font-size: 22px;
-            margin-bottom: 24px;
-        }
         .stat-wrap {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -38,6 +32,9 @@
             padding: 20px 12px;
             margin-bottom: 24px;
             text-align: center;
+            width: 75%;
+            margin-left: auto;
+            margin-right: auto;
         }
         .stat-num {
             font-size: 32px;
@@ -119,15 +116,17 @@
             width: auto;
             height: auto;
         }
-        .btn-group {
+        .btn-row {
             display: flex;
-            flex-direction: row;
             gap: 8px;
-            flex-wrap: wrap;
+            width: 60%;
+            margin: 0 auto;
             justify-content: center;
         }
-        .image-btn {
-            padding: 6px 16px;
+        .btn-row .image-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 4px;
             border-radius: 6px;
             border: none;
             background: #e5e7eb;
@@ -135,7 +134,7 @@
             cursor: pointer;
             font-size: 13px;
             transition: 0.2s;
-            min-width: 70px;
+            text-align: center;
             line-height: 1.8;
         }
         .image-btn.upload {
@@ -159,48 +158,37 @@
         .image-btn.overview:hover {
             background: #4b5563;
         }
-        .image-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .image-area .empty-tip {
-            color: #9ca3af;
-            font-size: 14px;
-        }
-        .nav-box {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-            justify-content: center;
-        }
-        .nav-btn {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: none;
+        .image-btn.nav {
             background: #e5e7eb;
             color: #1f2937;
-            cursor: pointer;
-            font-size: 15px;
-            transition: 0.2s;
         }
-        .nav-btn:hover:not(:disabled) {
+        .image-btn.nav:hover:not(:disabled) {
             background: #d1d5db;
         }
-        .nav-btn:disabled {
+        .image-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
+        .delete-container {
+            margin-top: 4px;
+            text-align: center;
+        }
+        .delete-container .image-btn {
+            padding: 4px 16px;
+            font-size: 13px;
+        }
+
         .btn-box {
             margin-top: 12px;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .btn-row {
+        .btn-row-box {
             display: flex;
             gap: 14px;
         }
-        .btn-row button {
+        .btn-row-box button {
             flex: 1;
             padding: 12px 10px;
             border-radius: 12px;
@@ -242,11 +230,11 @@
         #resetNamesBtn:hover:not(:disabled) {
             background-color: #7c3aed;
         }
-        .btn-row:last-child button {
+        .btn-row-box:last-child button {
             font-size: 13px;
             padding: 8px 10px;
         }
-        .btn-row button:disabled {
+        .btn-row-box button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -346,7 +334,6 @@
 </head>
 <body>
 <div class="container">
-    <h1>打点记录</h1>
     <div class="stat-wrap">
         <div>
             <div class="stat-num" id="finishCount">0</div>
@@ -365,19 +352,28 @@
             <button class="edit-btn" id="saveNameBtn">保存</button>
         </div>
         <div class="check-times" id="timesText"></div>
-        <div class="image-area" id="imageArea"></div>
-        <div class="nav-box">
-            <button class="nav-btn" id="prevBtn">◀ 上一个</button>
-            <button class="nav-btn" id="nextBtn">下一个 ▶</button>
+        <div class="image-area" id="imageArea">
+            <!-- 第一行：上传、总览 -->
+            <div class="btn-row" id="row1">
+                <button class="image-btn upload" id="uploadBtn">📤 上传图片</button>
+                <button class="image-btn overview" id="overviewBtnMain">📋 总览</button>
+            </div>
+            <!-- 第二行：上一个、下一个 -->
+            <div class="btn-row" id="row2">
+                <button class="image-btn nav" id="prevBtnMain">◀ 上一个</button>
+                <button class="image-btn nav" id="nextBtnMain">下一个 ▶</button>
+            </div>
+            <!-- 删除按钮容器 -->
+            <div class="delete-container" id="deleteContainer"></div>
         </div>
     </div>
 
     <div class="btn-box">
-        <div class="btn-row">
+        <div class="btn-row-box">
             <button id="confirmBtn">✅ 确认检查</button>
             <button id="resetBtn">🔄 重置进度</button>
         </div>
-        <div class="btn-row">
+        <div class="btn-row-box">
             <button id="clearImagesBtn">🗑️ 删除图片</button>
             <button id="resetNamesBtn">📝 恢复默认名</button>
         </div>
@@ -543,8 +539,13 @@
         const resetNamesBtn = document.getElementById("resetNamesBtn");
         const toast = document.getElementById("toast");
         const imageArea = document.getElementById("imageArea");
-        const prevBtn = document.getElementById("prevBtn");
-        const nextBtn = document.getElementById("nextBtn");
+        const deleteContainer = document.getElementById("deleteContainer");
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const overviewBtnMain = document.getElementById('overviewBtnMain');
+        const prevBtnMain = document.getElementById('prevBtnMain');
+        const nextBtnMain = document.getElementById('nextBtnMain');
+
         const modalOverlay = document.getElementById("modalOverlay");
         const modalCloseBtn = document.getElementById("modalCloseBtn");
         const gridContainer = document.getElementById("gridContainer");
@@ -579,7 +580,10 @@
         async function render() {
             totalCheckNumEl.textContent = totalCheckSum;
             finishCountEl.textContent = calcFinishTotal();
-            imageArea.innerHTML = '';
+
+            const imgElements = imageArea.querySelectorAll('img');
+            imgElements.forEach(img => img.remove());
+            deleteContainer.innerHTML = '';
 
             const total = taskList.length;
             const doneCount = taskList.filter(i => i.checked >= i.times).length;
@@ -592,9 +596,10 @@
                 resetBtn.disabled = isLocked;
                 clearImagesBtn.disabled = isLocked;
                 resetNamesBtn.disabled = isLocked;
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-                imageArea.innerHTML = `<span class="empty-tip">恭喜你完成所有点位！</span>`;
+                uploadBtn.disabled = true;
+                overviewBtnMain.disabled = true;
+                prevBtnMain.disabled = true;
+                nextBtnMain.disabled = true;
                 return;
             }
 
@@ -614,8 +619,11 @@
             clearImagesBtn.disabled = isLocked;
             resetNamesBtn.disabled = isLocked;
 
-            prevBtn.disabled = (currentIdx === 0);
-            nextBtn.disabled = (currentIdx === taskList.length - 1);
+            uploadBtn.disabled = isLocked;
+            overviewBtnMain.disabled = isLocked;
+            prevBtnMain.disabled = (currentIdx === 0) || isLocked;
+            nextBtnMain.disabled = (currentIdx === taskList.length - 1) || isLocked;
+            overviewBtnMain.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
 
             try {
                 const imageData = await getImage(currentIdx);
@@ -623,56 +631,7 @@
                     const img = document.createElement('img');
                     img.src = imageData;
                     img.alt = '点位图片';
-                    imageArea.appendChild(img);
-                } else {
-                    const tip = document.createElement('span');
-                    tip.className = 'empty-tip';
-                    tip.textContent = '暂无图片';
-                    imageArea.appendChild(tip);
-                }
-
-                const btnGroup = document.createElement('div');
-                btnGroup.className = 'btn-group';
-
-                const uploadBtn = document.createElement('button');
-                uploadBtn.className = 'image-btn upload';
-                uploadBtn.textContent = '📤 上传图片';
-                uploadBtn.disabled = isLocked;
-                uploadBtn.addEventListener('click', function() {
-                    if (isLocked) return;
-                    if (!fileInput) {
-                        fileInput = document.createElement('input');
-                        fileInput.type = 'file';
-                        fileInput.accept = 'image/*';
-                        fileInput.style.display = 'none';
-                        document.body.appendChild(fileInput);
-                        fileInput.addEventListener('change', async function(e) {
-                            const file = e.target.files[0];
-                            if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = async function(ev) {
-                                const dataUrl = ev.target.result;
-                                await saveImage(currentIdx, dataUrl);
-                                render();
-                            };
-                            reader.readAsDataURL(file);
-                            fileInput.value = '';
-                        });
-                    }
-                    fileInput.click();
-                });
-                btnGroup.appendChild(uploadBtn);
-
-                const overviewBtn = document.createElement('button');
-                overviewBtn.className = 'image-btn overview';
-                overviewBtn.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
-                overviewBtn.disabled = isLocked;
-                overviewBtn.addEventListener('click', function() {
-                    openModal();
-                });
-                btnGroup.appendChild(overviewBtn);
-
-                if (imageData) {
+                    imageArea.insertBefore(img, document.getElementById('row1'));
                     const delBtn = document.createElement('button');
                     delBtn.className = 'image-btn delete';
                     delBtn.textContent = '🗑️ 删除';
@@ -683,13 +642,10 @@
                         await deleteImage(currentIdx);
                         render();
                     });
-                    btnGroup.appendChild(delBtn);
+                    deleteContainer.appendChild(delBtn);
                 }
-
-                imageArea.appendChild(btnGroup);
             } catch (e) {
                 console.error('图片加载失败', e);
-                imageArea.innerHTML = `<span class="empty-tip">图片加载失败</span>`;
             }
         }
 
@@ -729,6 +685,50 @@
         function closeModal() {
             modalOverlay.classList.remove('active');
         }
+
+        uploadBtn.addEventListener('click', function() {
+            if (isLocked) return;
+            if (!fileInput) {
+                fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+                fileInput.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async function(ev) {
+                        const dataUrl = ev.target.result;
+                        await saveImage(currentIdx, dataUrl);
+                        render();
+                    };
+                    reader.readAsDataURL(file);
+                    fileInput.value = '';
+                });
+            }
+            fileInput.click();
+        });
+
+        overviewBtnMain.addEventListener('click', openModal);
+
+        prevBtnMain.addEventListener('click', function() {
+            if (isLocked) return;
+            if (currentIdx > 0) {
+                currentIdx--;
+                saveLocal();
+                render();
+            }
+        });
+
+        nextBtnMain.addEventListener('click', function() {
+            if (isLocked) return;
+            if (currentIdx < taskList.length - 1) {
+                currentIdx++;
+                saveLocal();
+                render();
+            }
+        });
 
         saveNameBtn.addEventListener("click", () => {
             const newName = posNameInput.value.trim();
@@ -792,22 +792,6 @@
             saveLocal();
             render();
             showToast('📝 已恢复默认名称');
-        });
-
-        prevBtn.addEventListener("click", () => {
-            if (currentIdx > 0) {
-                currentIdx--;
-                saveLocal();
-                render();
-            }
-        });
-
-        nextBtn.addEventListener("click", () => {
-            if (currentIdx < taskList.length - 1) {
-                currentIdx++;
-                saveLocal();
-                render();
-            }
         });
 
         modalCloseBtn.addEventListener("click", closeModal);
