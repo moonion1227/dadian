@@ -783,15 +783,25 @@
             }
         });
 
+        // ===== 修改部分：恢复默认名 =====
         resetNamesBtn.addEventListener("click", () => {
             if (isLocked) return;
-            if (!confirm('确定恢复所有点位名称为默认名称吗？（不会影响检查进度）')) return;
+            if (!confirm('确定恢复所有点位名称为代码中的原始名称吗？（不会影响检查进度）')) return;
+
+            // 1. 从 sourceList 展开获取原始名称（不带序号）
+            const rawExpanded = expandList(sourceList);
+            // 2. 将原始名称赋给 taskList（保留 checked 状态）
             for (let i = 0; i < taskList.length; i++) {
-                taskList[i].name = defaultNames[i] || taskList[i].name;
+                taskList[i].name = rawExpanded[i].name;
             }
+            // 3. 重新为重复名称添加序号 (1) (2) ...
+            addNumbersToDuplicates(taskList);
+            // 4. 更新 defaultNames 为新的带序号名称
+            defaultNames = taskList.map(item => item.name);
+            // 5. 保存并刷新界面
             saveLocal();
             render();
-            showToast('📝 已恢复默认名称');
+            showToast('📝 已恢复原始名称并重新编号');
         });
 
         modalCloseBtn.addEventListener("click", closeModal);
