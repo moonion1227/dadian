@@ -116,6 +116,52 @@
             line-height: 1.6;
             margin-bottom: var(--sp-12);
         }
+        .check-times.skipped {
+            color: #c2410c;
+            font-weight: 600;
+        }
+        .skip-row {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: var(--sp-12);
+        }
+        .skip-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            cursor: pointer;
+            font-size: var(--fs-13);
+            color: #6b7280;
+            user-select: none;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .skip-toggle:hover {
+            border-color: #f59e0b;
+            color: #b45309;
+        }
+        .skip-toggle input {
+            width: 15px;
+            height: 15px;
+            margin: 0;
+            accent-color: #f59e0b;
+            cursor: pointer;
+        }
+        .skip-toggle.active {
+            background: #fff7ed;
+            border-color: #f59e0b;
+            color: #c2410c;
+            font-weight: 600;
+        }
+        .skip-toggle.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .image-area {
             display: flex;
             flex-direction: column;
@@ -333,6 +379,30 @@
             border: 2px solid #d1d5db;
             color: #6b7280;
             transition: 0.15s;
+            position: relative;
+        }
+        .grid-item.skipped {
+            background: #fff7ed;
+            border-color: #f59e0b;
+            color: #c2410c;
+            text-decoration: line-through;
+        }
+        .grid-item.skipped::after {
+            content: "跳";
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            line-height: 18px;
+            padding: 0 3px;
+            border-radius: 9px;
+            background: #f59e0b;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            text-align: center;
         }
         .grid-item.done {
             background: #1f2937;
@@ -405,6 +475,12 @@
             <input type="text" id="posNameInput">
             <button class="edit-btn" id="saveNameBtn">保存</button>
         </div>
+        <div class="skip-row">
+            <label class="skip-toggle" id="skipToggleWrap" title="勾选后该点位自动跳过，不需要点确认">
+                <input type="checkbox" id="skipCheck">
+                <span id="skipText">跳过此点位</span>
+            </label>
+        </div>
         <div class="check-times" id="timesText"></div>
         <div class="image-area" id="imageArea">
             <div class="btn-row" id="row1">
@@ -435,7 +511,7 @@
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal-content">
         <button class="modal-close" id="modalCloseBtn">✕</button>
-        <div class="modal-title">所有点位</div>
+        <div class="modal-title" id="modalTitle">所有点位</div>
         <div id="gridContainer" class="grid-container"></div>
     </div>
 </div>
@@ -503,7 +579,8 @@
                     result.push({
                         name: item.name,
                         times: 1,
-                        checked: 0
+                        checked: 0,
+                        skip: false
                     });
                 }
             });
@@ -597,6 +674,10 @@
         const overviewBtnMain = document.getElementById('overviewBtnMain');
         const prevBtnMain = document.getElementById('prevBtnMain');
         const nextBtnMain = document.getElementById('nextBtnMain');
+        const skipToggleWrap = document.getElementById('skipToggleWrap');
+        const skipCheck = document.getElementById('skipCheck');
+        const skipText = document.getElementById('skipText');
+        const modalTitleEl = document.getElementById('modalTitle');
 
         const modalOverlay = document.getElementById("modalOverlay");
         const modalCloseBtn = document.getElementById("modalCloseBtn");
@@ -614,9 +695,29 @@
             return taskList.reduce((s, i) => s + i.checked, 0);
         }
 
+        // 被勾选“跳过”的点位数
+        function calcSkipCount() {
+            return taskList.reduce((s, i) => s + (i.skip ? 1 : 0), 0);
+        }
+
+        // 有效总点位 = 全部点位 - 跳过的点位
+        function calcEffectiveTotal() {
+            return Math.max(0, totalCheckSum - calcSkipCount());
+        }
+
+        // 跳过下一个未完成的点位（跳过标记的点位不再返回）
         function findNextUnfinished(startIdx) {
             for (let i = startIdx; i < taskList.length; i++) {
+                if (taskList[i].skip) continue;
                 if (taskList[i].checked < taskList[i].times) return i;
+            }
+            return -1;
+        }
+
+        // 沿 dir 方向找下一个“没有被跳过”的点位，找不到返回 -1
+        function findVisibleIndex(startIdx, dir) {
+            for (let i = startIdx; i >= 0 && i < taskList.length; i += dir) {
+                if (!taskList[i].skip) return i;
             }
             return -1;
         }
@@ -630,7 +731,7 @@
         }
 
         async function render() {
-            totalCheckNumEl.textContent = totalCheckSum;
+            totalCheckNumEl.textContent = calcEffectiveTotal();
             finishCountEl.textContent = calcFinishTotal();
 
             const imgElements = imageArea.querySelectorAll('img');
@@ -638,12 +739,13 @@
             deleteContainer.innerHTML = '';
 
             const total = taskList.length;
-            const doneCount = taskList.filter(i => i.checked >= i.times).length;
+            const doneCount = taskList.filter(i => i.skip || i.checked >= i.times).length;
             if (doneCount === total) {
                 posNameInput.value = "🎉 全部完成！";
                 posNameInput.disabled = true;
                 saveNameBtn.disabled = true;
                 timesTextEl.textContent = "";
+                timesTextEl.classList.remove('skipped');
                 confirmBtn.disabled = true;
                 resetBtn.disabled = isLocked;
                 clearImagesBtn.disabled = isLocked;
@@ -652,6 +754,11 @@
                 overviewBtnMain.disabled = true;
                 prevBtnMain.disabled = true;
                 nextBtnMain.disabled = true;
+                skipCheck.checked = false;
+                skipCheck.disabled = true;
+                skipToggleWrap.classList.remove('active');
+                skipToggleWrap.classList.add('disabled');
+                skipText.textContent = "跳过此点位";
                 return;
             }
 
@@ -661,20 +768,31 @@
             }
 
             const item = taskList[currentIdx];
+            const skipped = !!item.skip;
             posNameInput.disabled = false;
             saveNameBtn.disabled = false;
             posNameInput.value = item.name;
             const checkedNow = item.checked;
-            timesTextEl.innerHTML = `该点位需检查：${item.times} 次｜已确认：${checkedNow}/${item.times}`;
-            confirmBtn.disabled = isLocked || (checkedNow >= item.times);
+            timesTextEl.classList.toggle('skipped', skipped);
+            if (skipped) {
+                timesTextEl.innerHTML = `🚫 该点位已跳过｜不计入总点位，也不计入已检查次数`;
+            } else {
+                timesTextEl.innerHTML = `该点位需检查：${item.times} 次｜已确认：${checkedNow}/${item.times}`;
+            }
+            skipCheck.checked = skipped;
+            skipCheck.disabled = isLocked;
+            skipToggleWrap.classList.toggle('active', skipped);
+            skipToggleWrap.classList.toggle('disabled', isLocked);
+            skipText.textContent = skipped ? "已跳过（不需确认）" : "跳过此点位";
+            confirmBtn.disabled = isLocked || skipped || (checkedNow >= item.times);
             resetBtn.disabled = isLocked;
             clearImagesBtn.disabled = isLocked;
             resetNamesBtn.disabled = isLocked;
 
             uploadBtn.disabled = isLocked;
             overviewBtnMain.disabled = isLocked;
-            prevBtnMain.disabled = (currentIdx === 0) || isLocked;
-            nextBtnMain.disabled = (currentIdx === taskList.length - 1) || isLocked;
+            prevBtnMain.disabled = (findVisibleIndex(currentIdx - 1, -1) === -1) || isLocked;
+            nextBtnMain.disabled = (findVisibleIndex(currentIdx + 1, 1) === -1) || isLocked;
             overviewBtnMain.textContent = `📋 总览 (${currentIdx + 1}/${total})`;
 
             try {
@@ -713,12 +831,22 @@
         function renderModal() {
             gridContainer.innerHTML = '';
             const total = taskList.length;
+            const skipCount = calcSkipCount();
+            modalTitleEl.textContent = `所有点位（共 ${total} 个${skipCount ? `，跳过 ${skipCount} 个，有效 ${total - skipCount} 个` : ''}）`;
             for (let i = 0; i < total; i++) {
                 const div = document.createElement('div');
                 div.className = 'grid-item';
                 div.textContent = i + 1;
                 const item = taskList[i];
-                if (item.checked >= item.times) div.classList.add('done');
+                if (item.skip) {
+                    div.classList.add('skipped');
+                    div.title = `${item.name}（已跳过，点击可进入该点位取消跳过）`;
+                } else if (item.checked >= item.times) {
+                    div.classList.add('done');
+                    div.title = item.name;
+                } else {
+                    div.title = `${item.name}（未检查）`;
+                }
                 if (i === currentIdx) div.classList.add('current');
                 div.addEventListener('click', function() {
                     currentIdx = i;
@@ -766,8 +894,9 @@
 
         prevBtnMain.addEventListener('click', function() {
             if (isLocked) return;
-            if (currentIdx > 0) {
-                currentIdx--;
+            const prev = findVisibleIndex(currentIdx - 1, -1);
+            if (prev !== -1) {
+                currentIdx = prev;
                 saveLocal();
                 render();
             }
@@ -775,10 +904,26 @@
 
         nextBtnMain.addEventListener('click', function() {
             if (isLocked) return;
-            if (currentIdx < taskList.length - 1) {
-                currentIdx++;
+            const next = findVisibleIndex(currentIdx + 1, 1);
+            if (next !== -1) {
+                currentIdx = next;
                 saveLocal();
                 render();
+            }
+        });
+
+        // 勾选/取消“跳过此点位”
+        skipCheck.addEventListener('change', function() {
+            if (isLocked) return;
+            if (currentIdx < 0 || currentIdx >= taskList.length) return;
+            const item = taskList[currentIdx];
+            item.skip = skipCheck.checked;
+            saveLocal();
+            render();
+            if (item.skip) {
+                showToast(`⏭ 序号 ${currentIdx + 1} 已标记跳过（无需确认，不计入总点位）`);
+            } else {
+                showToast(`↩️ 序号 ${currentIdx + 1} 已取消跳过`);
             }
         });
 
@@ -796,25 +941,30 @@
             if (isLocked) return;
             if (currentIdx >= taskList.length) return;
             const item = taskList[currentIdx];
+            if (item.skip) return;
             if (item.checked < item.times) {
+                const fromIdx = currentIdx;
                 item.checked++;
                 saveLocal();
+                let jumped = false;
                 if (item.checked >= item.times) {
+                    // 自动找下一个未完成且未跳过的点位
                     const next = findNextUnfinished(currentIdx + 1);
                     if (next !== -1) {
                         currentIdx = next;
+                        jumped = next > fromIdx + 1;
                         saveLocal();
                     }
                 }
                 render();
                 showToastAndLock();
-                showToast('✅ 已确认检查');
+                showToast(jumped ? `✅ 已确认，自动跳到序号 ${currentIdx + 1}` : '✅ 已确认检查');
             }
         });
 
         resetBtn.addEventListener("click", () => {
             if (isLocked) return;
-            if (!confirm('确定重置全部进度吗？（不会删除图片和名字）')) return;
+            if (!confirm('确定重置全部进度吗？（不会删除图片和名字，已勾选的“跳过”标记会保留）')) return;
             taskList.forEach(i => i.checked = 0);
             currentIdx = 0;
             saveLocal();
@@ -961,7 +1111,8 @@
                                 newList.push({
                                     name: oldList[i].name || taskList[i].name,
                                     times: taskList[i].times,
-                                    checked: typeof oldList[i].checked === 'number' ? oldList[i].checked : 0
+                                    checked: typeof oldList[i].checked === 'number' ? oldList[i].checked : 0,
+                                    skip: !!oldList[i].skip
                                 });
                             } else {
                                 newList.push({ ...taskList[i] });
@@ -981,7 +1132,8 @@
             if (currentIdx < 0 || currentIdx >= taskList.length) {
                 currentIdx = 0;
             }
-            if (currentIdx < taskList.length && taskList[currentIdx].checked >= taskList[currentIdx].times) {
+            const curItem = taskList[currentIdx];
+            if (curItem && (curItem.skip || curItem.checked >= curItem.times)) {
                 const next = findNextUnfinished(currentIdx + 1);
                 if (next !== -1) {
                     currentIdx = next;
